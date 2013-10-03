@@ -1,0 +1,173 @@
+ ----------------------------------
+|Group 13 - Repair Service Database|
+ ----------------------------------
+
+
+
+SQL Queries translated from Milestone 1
+----------------------------------------
+
+
+* NB -- the .txt format was used to preserve the proper SQL syntax for quotes *
+
+
+
+
+1. What are the number of repairs in Canada for ‘Macbook Air 11’?
+
+
+SELECT COUNT( R.repairid ) 
+FROM Product P, Repairs R, Store S
+WHERE P.serialno = R.serialno
+AND R.storeid = S.storeid
+AND S.addctry =  'Canada'
+AND P.pname =  'Macbook Air 11'
+
+
+2. How many parts are currently located in store 1?
+
+SELECT COUNT( * ) 
+FROM  `Service Parts` P
+WHERE P.storeid =1
+
+
+3. Which parts are located in North America?
+
+
+SELECT P.partno, S.addctry
+FROM  `Service Parts` P, Store S
+WHERE P.storeid = S.storeid
+AND S.addctry
+IN (
+SELECT S.addctry
+FROM Store S
+WHERE S.addctry =  'Canada'
+OR S.addctry =  'USA'
+)
+
+
+4. What is the customer's contact information for the product with serial number C47888968450?
+
+
+SELECT C.fname, C.phoneno, C.email
+FROM Customer C, Product P
+WHERE P.customerid = C.customerid 
+AND P.serialno = 'C47888968450'
+
+
+5. When do the product warranties for Customer 1 expire?
+
+
+SELECT P.warexpiry, P.pname
+FROM Product P, Customer C
+WHERE P.customerid = C.customerid
+AND C.customerid =  '1'
+
+
+6. Which employees worked on repair 1?
+
+SELECT E.techid
+FROM Employee E, `Repair Notes` N
+WHERE E.techid = N.techid AND N.repairid = 1
+
+
+7. Which repairs are currently covered under warranty?
+
+
+SELECT R.repairid
+FROM Repairs R, Product P
+WHERE R.created <= P.warexpiry AND P.serialno = R.serialno
+
+
+8. How many repairs of ‘iMac 21’ are classified as safety issues?
+
+
+SELECT COUNT( R.repairid ) 
+FROM Repairs R, Product P
+WHERE R.serialno = P.serialno
+AND P.pname =  'iMac 21'
+AND R.safety =1
+
+
+9. What is the average number of parts used for all repairs?
+
+This is a set of 3 queries. The first creates a view with the result of all parts with an assigned repaired. The second creates a view with the result of total number of repairs.
+The last query takes the result of both those views to calculate the average number of parts used in all repairs. The views have already been created and are part of the .sql file.
+
+
+CREATE VIEW Part_Count AS
+SELECT COUNT(P.partno) AS pcount
+FROM  `Service Parts` P
+WHERE P.repairid IS NOT NULL
+
+
+CREATE VIEW Repair_Count AS
+SELECT COUNT(R.repairid) AS rcount
+FROM Repairs R
+
+
+SELECT P.pcount / R.rcount
+FROM Part_Count P, Repair_Count R
+
+
+
+10. What is the average turnaround time for repairs in Canada?
+
+
+SELECT AVG( R.completed - R.created ) 
+FROM Repairs R, Store S
+WHERE R.completed IS NOT NULL
+AND R.storeid=S.storeid
+AND S.addctry='Canada'
+
+
+
+SQL Operational Queries (DELETE, INSERT, UPDATE)
+------------------------------------------------
+
+
+
+1. The entire collection of repair parts at Store 2 costing over $50 were lost
+
+
+DELETE FROM `Service Parts`
+WHERE storeid = 2 AND price < 50
+
+
+2. For reasons unrelated to question 1, employee John Smith from store 2 is fired the following day.
+
+
+DELETE FROM Employee
+WHERE fname = 'John' AND lname = 'Smith' AND storeid = 2
+
+
+3. A product with serial number R03095211190 is brought to store 3 for a non-safety related repair and a new entry is created on April 5th, 2013.
+
+
+INSERT INTO Repairs (`serialno`, `created`, `completed`, `storeid`, `signature`, `safety`)
+VALUES ('R03095211190',2013-4-5, null,3,0,0) 
+
+
+
+4. Employee with TechID 783783 adds a note to repair 14 saying that the product has a broken screen
+
+
+INSERT INTO `Repair Notes` (`title`, `body`, `techid`, `repairid`)
+VALUES ('Initial Assessment','Screen is cracked and non-functional',783783, 14)
+
+
+5. A repair for product whose serial number is C02143658798 has been completed on April 5th 2013.
+
+
+UPDATE Repairs
+SET completed = 2013-4-5
+WHERE serialno =  C02143658798
+
+
+6. All current employees of store 2 are reassigned to store 3
+
+
+UPDATE Employee
+SET storeid = 3
+WHERE storeid = 2
+
